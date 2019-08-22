@@ -35,27 +35,32 @@ module.exports = async function(collection, searchString, params) {
 
   // We must perform an aggregate query since Mongo can't query a range when using $text search.
 
-  const aggregate = [{
-    $match: _.extend({}, params.query, {
-      $text: {
-        $search: searchString
+  const aggregate = [
+    {
+      $match: _.extend({}, params.query, {
+        // $text: {
+        //   $search: searchString
+        // }
+        name: { $regex: searchString, $options: "i" }
+      })
+    },
+    {
+      $project: _.extend({}, params.fields, {
+        _id: 1,
+        score: {
+          $meta: "textScore"
+        }
+      })
+    },
+    {
+      $sort: {
+        // score: {
+        //   $meta: "textScore"
+        // },
+        _id: -1
       }
-    })
-  }, {
-    $project: _.extend({}, params.fields, {
-      _id: 1,
-      score: {
-        $meta: 'textScore'
-      }
-    })
-  }, {
-    $sort: {
-      score: {
-        $meta: 'textScore'
-      },
-      _id: -1
     }
-  }];
+  ];
 
   if (params.next) {
     aggregate.push({
